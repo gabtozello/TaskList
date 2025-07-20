@@ -402,7 +402,15 @@ export default function App() {
 
 
 
-
+    //const [task, setTask] = useState("");
+    //const [status, setStatus] = useState("todo");
+    //const handleTaskChange = e => {
+    //    setTask(e.target.value);
+    //}
+    //const handleStatusChange = e => {
+    //    setStatus(e.target.value);
+    //}
+    //console.log(task, status);
 
 
 
