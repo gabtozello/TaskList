@@ -1,0 +1,13 @@
+.task_column {
+  width: 33.33%;
+  margin: 20px;
+}
+.task_column_header {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* cria espaço entre o emoji e o nome */
+}
+.icon {
+    margin-right: 100px;
+    font-size: 2rem; /** tamanho do emoji */
+}

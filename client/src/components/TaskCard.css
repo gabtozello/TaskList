@@ -1,0 +1,45 @@
+.task_card {
+    width: 100%;
+    max-width: 300px;
+    min-height: 100px;
+    border: 1px solid gray;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px 0px;
+}
+
+.task_text {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.task_card_bottom_line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.task_delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.task_delete:hover {
+  background-color: rgba(128, 128, 128, 0.2); /* cinza claro com transparência */
+}
+
+.task_delete_icon {
+  font-size: 18px; /* ajusta o tamanho do emoji */
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
