@@ -92,3 +92,8 @@ npm run dev
 - Navegue entre as colunas To Do, Doing e Done para atualizar o status das tarefas.
 
 - Use filtros de categorias e busca para encontrar tarefas específicas.
+
+## 🌐 Acesso ao Projeto
+
+[![Deploy na Vercel](https://img.shields.io/badge/VERCEL-online-success?style=for-the-badge&logo=vercel)](https://task-list-9a63oho6w-gabtozellos-projects.vercel.app)
+
