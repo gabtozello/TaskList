@@ -1,19 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: #9ba172;
+  color: #f8f9fa;
+  font-family: 'Segoe UI', sans-serif;
+}
 .app {
   display: grid;
-  grid-template-rows: 150px auto;
+  grid-template-rows: 100px auto;
 }
+.app_header {
+  background-color: #7c8a30; 
+  color: #f8f9fa;
+  padding: 30px 0;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  letter-spacing: 1px;
+}
+.app_main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* centraliza horizontalmente */
+  gap: 20px; /* espaço entre as colunas */
+  padding: 10px;
+}
+
+.task_controls_wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px; /* espaçamento nas laterais e acima do search */
+}
+
+/* Alinha search e botão lado a lado, adaptável */
+.task_controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search_wrapper {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Barra de busca com visual moderno e responsiva */
+.search {
+  font-size: 1rem;
+  font-weight: 400;
+  background: #ffffff;
+  color: #b4aa35;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  width: 100%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  
+}
+.search:focus {
+  outline: none;
+  border-color:  #b4aa35;
+  box-shadow: 0 0 0 3px rgba(240, 232, 148, 0.3);
+}
+
+.task_modal_btn {
+  background-color: #3b3a30;
+  color:  #f8f9fa;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.task_modal_btn:hover {
+  background-color: #63695d;
+}
+
 .app_main {
   display: flex;
   justify-content: space-evenly;
   padding: 20px 8%;
 }
+
 .button_showForm {
   font-size: 0.9rem;
   font-weight: 500;
-  background-color: white;
-  border: 1px solid #dfe3e6;
-  border-radius: 2px 10px;
-  padding: 2px 10px;
+  background-color: #ececf3;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 16px;
   margin-right: 10px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+/* Container externo para centralizar tudo */
+.categories_container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+/* Container interno que segura os chips lado a lado */
+.categories_btns_wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 800px;
+}
+
+/* Cada chip de categoria (botão + ❌) */
+.category_chip {
+  display: flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  border-radius: 50px;
+  padding: 6px 12px;
+  gap: 6px;
+  border: 1px solid #cbd5e1;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover no chip */
+.category_chip:hover {
+  background-color: #e2e8f0;
+}
+
+/* Botão da categoria */
+.category_chip button:first-child {
+  background: none;
+  border: none;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Estilo de botão ativo */
+.ativo {
+  background-color: #6366f1;
+  color:  #b4aa35 !important;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 30px;
+}
+
+/* Botão para remover categoria */
+.remove_category_btn {
+  background: transparent;
+  border: none;
+  font-size: 0.5rem;
+  font-weight: bold;
+  color: crimson;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px;
+}
+
+/* Botão "+ Nova Categoria" */
+.nova_categoria_btn {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.nova_categoria_btn:hover {
+  background-color: #4f46e5;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+  .categories_btns_wrapper {
+    justify-content: center;
+  }
+
+  .category_chip {
+    flex-direction: row;
+    padding: 4px 10px;
+  }
+
+  .nova_categoria_btn {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+  }
 }

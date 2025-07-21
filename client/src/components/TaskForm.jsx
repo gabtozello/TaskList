@@ -4,105 +4,139 @@ import Tag from "./Tag.jsx";
 
 //useState adiciona as "funçoes"
 
-const TaskForm = ({ setTasks }) => {
-  const [taskData, setTaskData] = useState({
-    task: "",
-    status: "todo",
-    tags: [],
-  });
-  const checkTag = (tag) => {
-    return taskData.tags.some((item) => item === tag);
-  };
-setTasks
-  const selectTag = (tag) => {
-    //verificando se a tag existe
-    if (taskData.tags.some((item) => item === tag)) {
-      const filterTags = taskData.tags.filter((item) => item !== tag);
-      setTaskData((prev) => {
-        return { ...prev, tags: filterTags };
-      });
-    }else {
-      setTaskData((prev) => {
-        return { ...prev, tags: [...prev.tags, tag] };
-      });
-    }
-  };
-  //esse else altera o valor anterior da tag (possibilitando mudar ou retirar tags)
-    //...  é chamado de operador spread (espalhamento) ou rest (resto)
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const TaskForm = ({
+  setTasks,
+  categories,
+  taskData,
+  setTaskData,
+  editIndex,
+  setEditIndex,
+  onCancel,
+}) => {
+  // Verifica se a tag está selecionada
+  const isTagSelected = (tag) => taskData.tags.includes(tag)
 
-    setTaskData((prev) => {
-      return { ...prev, [name]: value };
+  // Adiciona ou remove a tag
+  const toggleTag = (tag) => {
+    setTaskData((prev) => { 
+      const tags = Array.isArray(prev.tags) ? prev.tags : [];
+      return {
+      ...prev,
+      tags: tags.includes(tag) 
+      ? tags.filter((t) => t !== tag)
+      : [...tags, tag],
+    };
     });
+  }
+
+  // Atualiza qualquer campo do formulário
+   const handleChange = (e) => {
+    const { name, value } = e.target;
+    setTaskData((prev) => ({
+       ...prev, 
+       [name]: value,
+    }));
   };
-  //clicando em submit armazena o objeto
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(taskData);
-    setTasks((prev) => {
-      return [...prev, taskData];
-    });
-    setTaskData({
-      task: "",
-      status: "todo",
-      tags: [],
-    });
+
+  // Submete nova tarefa ou atualiza tarefa existente
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (taskData.task.trim() === "") {
+        alert("O título da tarefa não pode estar vazio.");
+        return;
+      }
+      if (editIndex !== null) {
+        setTasks((prev) => {
+          const updatededTasks = [...prev];
+          updatededTasks[editIndex] = taskData;
+          return updatededTasks;
+        });
+        setEditIndex(null);
+      } else {
+        setTasks((prev) => [...prev, taskData]);
+      }
+
+    // Limpa formulário após salvar
+      setTaskData({
+          task: "",
+          task_description: "",
+          status: "todo",
+          tags: [],
+          category: "",
+        });
+      onCancel(); // Fechar modal
   };
-  //tag seletion
 
   return (
     <header className="app_header">
       <form onSubmit={handleSubmit}>
+        {/** Título da tarefa */}
         <input
           type="text"
           name="task"
           value={taskData.task}
           className="task_input"
-          placeholder="Enter your task"
+          placeholder="Digite o título da tarefa..."
           onChange={handleChange}
         />
-        {/**ON CHANGE ACONTECE AQUI OLHA ^ */}
-        {/**aqui os botoes de categorias para alterar para dinamico >>>>> */}
+
+        {/** Descrição da tarefa */}
+        <input
+          type="text"
+          name="task_description"
+          value={taskData.task_description}
+          className="task_input"
+          placeholder="Digite a descrição..."
+          onChange={handleChange}
+        />
+        
         <div className="task_form_bottom_line">
-          {/** separando a sessão de tags(categorias) das colunar de listas */}
-          <div>
-            {/** Usando props, modificamos o nome e o que esta escrito em cada botão
-                         * tornando mais dinamico, acredito que aqui que iremos adicionar/remover cada categoria
-                         Ex: function define tagName in input for tagname made a new tag
-                         TaskForm = Parent
-                         Tag = Child
-                         */}
+
+        {/** Tags existentes */}
+          <div className="tag_container">
+            {["Importante", "Prioridade", "Urgente"].map((tag, index) => (
             <Tag
-              tagName="HTML"
-              selectTag={selectTag}
-              selected={checkTag("HTML")}
+              key={index}
+              tagName={tag}
+              selectTag={toggleTag}
+              selected={isTagSelected(tag)}
             />
-            <Tag
-              tagName="React"
-              selectTag={selectTag}
-              selected={checkTag("React")}
-            />
-            <Tag
-              tagName="Python"
-              selectTag={selectTag}
-              selected={checkTag("Python")}
-            />
+            ))}
           </div>
-          <div>
+
+          <div className="select_actions_container">
+            {/** Categorias */}
+            <select
+              name="category"
+              value={taskData.category}
+              className="task_categories"
+              onChange={handleChange}>
+              <option value="">Selecione uma categoria</option>
+              {categories.map((cat, index) => (
+                <option key={index} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            {/** Status */}
             <select
               name="status"
-              value={taskData.status} 
-              className="task_status" 
+              value={taskData.status}
+              className="task_status"
               onChange={handleChange}>
               <option value="todo">To do</option>
               <option value="doing">Doing</option>
               <option value="done">Done</option>
             </select>
-
+            {/** Botões Salvar e Cancelar */}
+            <div className="form_buttons">
             <button type="submit" className="task_submit">
-              + Add Task
+              {editIndex !== null ? "Salvar" : "+ Adicionar Tarefa"}
             </button>
+            <button type="button" className="task_cancel" onClick={onCancel}>
+              Cancelar
+            </button>
+            </div>
           </div>
         </div>
       </form>
