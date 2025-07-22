@@ -14,7 +14,6 @@ const TaskCard = ({
   handleMoveLeft,
   handleMoveRight
 }) => {
-  console.log("Categoria da tarefa:", category);
   const statusOrder = ["todo", "doing", "done"];
   const currentStatusIndex = statusOrder.indexOf(status);
 

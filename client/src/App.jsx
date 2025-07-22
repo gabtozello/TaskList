@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import TaskForm from "./components/TaskForm.jsx";
 import TaskColumn from "./components/TaskColumn.jsx";
+import axios from "axios";
+
+//localStorage.removeItem("categorias")
 
 const App = () => {
   // Estados principais
@@ -30,19 +33,118 @@ const App = () => {
     setEditIndex(null);
   };
 
-  // Inicializa o estado 'categories' lendo do localStorage para persistência entre sessões
-  // Se não encontrar categorias salvas, usa o array padrão como valor inicial
+// <----------------------CATEGORIAS------------------------------->
+// Estado inicial das categorias
+// Tenta carregar do localStorage ("categorias") ou começa com um array vazio
   const [categories, setCategories] = useState(() => {
     const savedCategories = localStorage.getItem("categorias");
-    return savedCategories
-      ? JSON.parse(savedCategories)
-      : ["Trabalho", "Pessoal", "Urgente"];
+    return savedCategories ? JSON.parse(savedCategories) : [];
   });
-
+// useEffect para buscar categorias do backend assim que o componente carregar
   useEffect(() => {
-    localStorage.setItem("categorias", JSON.stringify(categories));
-  }, [categories]);
+    const fetchCategories = async () => {
+      try {
+        // Requisição GET para pegar categorias salvas no backend
+        const response = await axios.get(
+          "http://localhost:8080/api/categories"
+        );
+        const backendCategories = response.data;
 
+        
+      // Cria uma cópia das categorias locais
+        const merged = [...categories];
+
+        // Verifica se alguma categoria do backend ainda não está no local e adiciona
+        backendCategories.forEach((cat) => {
+          const exists = merged.some((localCat) => localCat.id === cat.id);
+          if (!exists) {
+            merged.push(cat);
+          }
+        });
+
+         // Atualiza o estado e o localStorage com a lista mesclada
+        setCategories(merged);
+        localStorage.setItem("categorias", JSON.stringify(merged));
+      
+      } catch (error) {
+        console.error("Erro ao buscar categorias do BackEnd:", error);
+      }
+    };
+    // Executa a busca das categorias
+    fetchCategories();
+  }, []);
+
+// Função para adicionar uma nova categoria (local + backend)
+  const handleAddCategory = async () => {
+    const input = prompt("Digite o nome da nova categoria:");
+    const newCat = input && input.trim();
+    // Verifica se já existe uma categoria com o mesmo nome
+    if (newCat && !categories.some((cat) => cat.name === newCat)) {
+      try {
+        // Requisição POST para salvar no backend
+        const response = await axios.post(
+          "http://127.0.0.1:8080/api/categories",
+          {
+            name: newCat,
+          }
+        );
+
+        // Adiciona a nova categoria ao estado e ao localStorage
+        const newCategory = response.data;
+        const updated = [...categories, newCategory];
+
+        setCategories(updated);
+        localStorage.setItem("categorias", JSON.stringify(updated));
+
+        // Se falhar, salva apenas localmente com id 0 (temporário)
+      } catch (error) {
+        console.error("Erro ao salvar nova categoria no backend:", error);
+        const localCategory = { id: 0, name: newCat };
+        const updated = [...categories, localCategory];
+        setCategories(updated);
+        localStorage.setItem("categorias", JSON.stringify(updated));
+      }
+    }
+  };
+
+// Função para remover uma categoria (local + backend)
+  const handleRemoveCategory = async (categoryToRemove) => {
+    // Confirmação com o usuário
+    const confirmRemove = window.confirm(
+      `Tem certeza que deseja remover a categoria "${categoryToRemove.name}"?`
+    );
+    if (!confirmRemove) return;
+
+    try {
+        // Se a categoria existir no backend (id diferente de 0), envia DELETE
+      if (categoryToRemove.id !== 0) {
+        await axios.delete(
+          `http://127.0.0.1:8080/api/categories/${categoryToRemove.id}`
+        );
+      }
+      // Remove do estado local e atualiza localStorage
+      const updated = categories.filter(
+        (cat) => cat.id !== categoryToRemove.id
+      );
+      setCategories(updated);
+      localStorage.setItem("categorias", JSON.stringify(updated));
+
+      // Atualiza tarefas: remove a referência à categoria excluída
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.category?.id === categoryToRemove.id
+            ? { ...task, category: null }
+            : task
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao remover categoria no backend", error);
+      alert("Não foi possível remover a categoria. Tente novamente");
+    }
+  };
+
+
+  
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   // Filtro de tarefas para categorias / Pesquisa de tarefas
@@ -67,38 +169,6 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
-
-  // Adicionar nova categoria
-  const handleAddCategory = () => {
-    const newCat = prompt("Digite o nome da nova categoria:");
-
-    if (newCat && !categories.includes(newCat)) {
-      setCategories((prev) => [...prev, newCat]);
-    }
-  };
-
-  // Remover categoria
-  const handleRemoveCategory = (cat) => {
-    const confirm = window.confirm(
-      `Tem certeza que deseja remover a categoria "${cat}"?`
-    );
-
-    if (confirm) {
-      setCategories((prev) => prev.filter((c) => c !== cat));
-
-      // Remover a categoria excluida das tasks
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.category === cat ? { ...task, category: "" } : task
-        )
-      );
-
-      // Se a categoria removida estava selecionada, resetar para useState("Todas")
-      if (selectedCategory === cat) {
-        setSelectedCategory("Todas");
-      }
-    }
-  };
 
   // Deletar tarefa
   const handleDelete = (index) => {
@@ -126,30 +196,30 @@ const App = () => {
     setTasks((prevTasks) => {
       const updatedTasks = [...prevTasks];
       if (updatedTasks[index].status === "doing") {
-        updatedTasks[index].status = "todo";}
-      else if (updatedTasks[index].status === "done") {
-        updatedTasks[index].status = "doing";}
+        updatedTasks[index].status = "todo";
+      } else if (updatedTasks[index].status === "done") {
+        updatedTasks[index].status = "doing";
+      }
       return updatedTasks;
     });
   };
 
-    // Mover tarefa para o próximo estado
-const handleMoveRight = (index) => {
-  setTasks((prevTasks) => {
-    return prevTasks.map((task, i) => {
-      if (i !== index) return task;
+  // Mover tarefa para o próximo estado
+  const handleMoveRight = (index) => {
+    setTasks((prevTasks) => {
+      return prevTasks.map((task, i) => {
+        if (i !== index) return task;
 
-      if (task.status === "todo") {
-        return { ...task, status: "doing" };
-      } else if (task.status === "doing") {
-        return { ...task, status: "done" };
-      } else {
-        return task;
-      }
+        if (task.status === "todo") {
+          return { ...task, status: "doing" };
+        } else if (task.status === "doing") {
+          return { ...task, status: "done" };
+        } else {
+          return task;
+        }
+      });
     });
-  });
-};
-
+  };
 
   return (
     <div className="app">
@@ -197,12 +267,12 @@ const handleMoveRight = (index) => {
             </button>
           </div>
           {/* Botões de categorias */}
-          {categories.map((cat, i) => (
-            <div key={i} className="category_chip">
+          {categories.map((cat) => (
+            <div key={cat.id} className="category_chip">
               <button
                 onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat ? "ativo" : ""}>
-                {cat}
+                className={selectedCategory.id === cat.id ? "ativo" : ""}>
+                {cat.name}
               </button>
               <button
                 onClick={() => handleRemoveCategory(cat)}

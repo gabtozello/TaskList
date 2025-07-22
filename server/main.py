@@ -48,14 +48,21 @@ class Category(db.Model):
             'name': self.name,
         }
 
-
-
 # Rotas para Tarefas
 
+# busca tarefas --> editIndex, filtro de pesquisa, filtro de categorias
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
     tasks = Task.query.all()
     return jsonify([task.to_dict() for task in tasks])
+
+
+
+# recebe dados da nova tarefa ---> 
+#<button type="submit" className="task_submit">
+#{editIndex !== null ? "Salvar" : "+ Adicionar Tarefa"}
+#</button>
+# se o botao estiver escrito "adicionar tarefa", faz esse post ->>>>
 
 @app.route('/api/tasks', methods=['POST'])
 def add_task():
@@ -83,6 +90,12 @@ def add_task():
     return jsonify(task.to_dict()), 201
 
 
+# recebe dados atualizados da tarefa ---> 
+#<button type="submit" className="task_submit">
+#{editIndex !== null ? "Salvar" : "+ Adicionar Tarefa"}
+#</button>
+#handleMoveLeft, handleMoveRight
+# se o botao estiver escrito "salvar", faz esse put ->>>>
 @app.route('/api/tasks/<int:id>', methods=['PUT'])
 def update_task(id):
     task = Task.query.get_or_404(id)
@@ -99,7 +112,8 @@ def update_task(id):
     return jsonify(task.to_dict())
 
 
-
+# exclui a task do banco -----> 
+#handleDelete
 @app.route('/api/tasks/<int:id>', methods=['DELETE'])
 def delete_task(id):
     task = Task.query.get_or_404(id)
@@ -107,12 +121,28 @@ def delete_task(id):
     db.session.commit()
     return '', 204
 
+
+
+
+
+
+
+
+
+
+
+
+
 # Rotas para categorias
+#get categorias, para mostrar nos botoes de categoria mesmo atualizando
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
     categories = Category.query.all()
     return jsonify([cat.to_dict() for cat in categories])
 
+
+# post adicionar nova categoria
+#handleNewCategory 
 @app.route('/api/categories', methods=['POST'])
 def add_category():
     data = request.get_json()
@@ -127,19 +157,11 @@ def add_category():
     category = Category(name=name)
     db.session.add(category)
     db.session.commit()
+    
     return jsonify(category.to_dict()), 201
 
-@app.route('/api/categories/<int:id>', methods=['PUT'])
-def update_category(id):
-    category = Category.query.get_or_404(id)
-    data = request.get_json()
-    name = data.get('name')
-    if not name:
-        return jsonify({'error': 'Nome da categoria é obrigatório'}), 400
-    category.name = name
-    db.session.commit()
-    return jsonify(category.to_dict())
-
+# deletar categoria 
+# handleRemoveCategory
 @app.route('/api/categories/<int:id>', methods=['DELETE'])
 def delete_category(id):
     category = Category.query.get_or_404(id)
