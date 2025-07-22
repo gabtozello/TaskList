@@ -7,6 +7,7 @@ import axios from "axios";
 //localStorage.removeItem("categorias")
 
 const App = () => {
+
   // Estados principais
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem("tasks");
@@ -144,7 +145,11 @@ const App = () => {
   };
 
 
-  
+
+
+
+
+
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   // Filtro de tarefas para categorias / Pesquisa de tarefas
@@ -159,8 +164,17 @@ const App = () => {
 
     // Quando não tem busca, filtra pela categoria (ou "Todas" para tudo)
     const isAllSelected = selectedCategory === "Todas";
-    return isAllSelected ? true : task.category === selectedCategory;
+    const taskCategoryName = task.category?.name || "";
+    return isAllSelected ? true : taskCategoryName === selectedCategory;
   });
+
+
+
+
+
+
+
+
 
   const [showForm, setShowForm] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -170,10 +184,26 @@ const App = () => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
+
   // Deletar tarefa
-  const handleDelete = (index) => {
-    setTasks((prev) => prev.filter((_, i) => i !== index));
-  };
+const handleDelete = (index) => {
+  setTasks((prev) => {
+    const taskToDelete = prev[index];
+
+    // Chamada ao backend
+    axios.delete(`http://localhost:8080/api/tasks/${taskToDelete.id}`)
+      .catch((err) => {
+        console.error("Erro ao deletar tarefa do backend", err);
+      });
+
+    const updatedTasks = prev.filter((_, i) => i !== index);
+
+    // Atualiza o localStorage
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+
+    return updatedTasks;
+  });
+};
 
   // Editar tarefa
   const handleEdit = (index) => {
@@ -191,35 +221,56 @@ const App = () => {
     setShowForm((prev) => !prev);
   };
 
-  // Mover tarefa para o estado anterior
-  const handleMoveLeft = (index) => {
-    setTasks((prevTasks) => {
-      const updatedTasks = [...prevTasks];
-      if (updatedTasks[index].status === "doing") {
-        updatedTasks[index].status = "todo";
-      } else if (updatedTasks[index].status === "done") {
-        updatedTasks[index].status = "doing";
-      }
-      return updatedTasks;
-    });
-  };
+const handleMoveLeft = (index) => {
+  setTasks((prevTasks) => {
+    const updatedTasks = [...prevTasks];
+    const task = { ...updatedTasks[index] }; // cria cópia real
 
-  // Mover tarefa para o próximo estado
-  const handleMoveRight = (index) => {
-    setTasks((prevTasks) => {
-      return prevTasks.map((task, i) => {
-        if (i !== index) return task;
+    if (task.status === "doing") {
+      task.status = "todo";
+    } else if (task.status === "done") {
+      task.status = "doing";
+    } else {
+      return prevTasks; // não faz nada se já estiver em "todo"
+    }
 
-        if (task.status === "todo") {
-          return { ...task, status: "doing" };
-        } else if (task.status === "doing") {
-          return { ...task, status: "done" };
-        } else {
-          return task;
-        }
+    updatedTasks[index] = task;
+
+    axios.put(`http://localhost:8080/api/tasks/${task.id}`, task)
+      .catch((err) => {
+        console.error("Erro ao mover tarefa para a esquerda", err);
       });
-    });
-  };
+
+    return updatedTasks;
+  });
+};
+
+const handleMoveRight = (index) => {
+  setTasks((prevTasks) => {
+    const updatedTasks = [...prevTasks];
+    const task = { ...updatedTasks[index] }; // cria cópia real
+
+    if (task.status === "todo") {
+      task.status = "doing";
+    } else if (task.status === "doing") {
+      task.status = "done";
+    } else {
+      return prevTasks; // não faz nada se já estiver em "done"
+    }
+
+    updatedTasks[index] = task;
+
+    axios.put(`http://localhost:8080/api/tasks/${task.id}`, task)
+      .catch((err) => {
+        console.error("Erro ao mover tarefa para a direita", err);
+      });
+
+    return updatedTasks;
+  });
+};
+
+
+
 
   return (
     <div className="app">
@@ -270,8 +321,8 @@ const App = () => {
           {categories.map((cat) => (
             <div key={cat.id} className="category_chip">
               <button
-                onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory.id === cat.id ? "ativo" : ""}>
+                onClick={() => setSelectedCategory(cat.name)}
+                className={selectedCategory.id === cat.name ? "ativo" : ""}>
                 {cat.name}
               </button>
               <button

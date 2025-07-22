@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./TaskForm.css";
 import Tag from "./Tag.jsx";
-
+import axios from "axios";
 //useState adiciona as "funçoes"
 
 const TaskForm = ({
@@ -32,39 +32,64 @@ const TaskForm = ({
   // Atualiza qualquer campo do formulário
    const handleChange = (e) => {
     const { name, value } = e.target;
-    setTaskData((prev) => ({
-       ...prev, 
-       [name]: value,
-    }));
+    if (name === "category") {
+      const selectedCategory = categories.find(cat => cat.id === Number(value))
+      setTaskData(prev => ({...prev, category: selectedCategory}));
+    } else{
+      setTaskData((prev) => ({...prev, [name]: value}));
+    }
   };
 
   // Submete nova tarefa ou atualiza tarefa existente
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
+
       if (taskData.task.trim() === "") {
         alert("O título da tarefa não pode estar vazio.");
         return;
       }
-      if (editIndex !== null) {
-        setTasks((prev) => {
-          const updatededTasks = [...prev];
-          updatededTasks[editIndex] = taskData;
-          return updatededTasks;
-        });
-        setEditIndex(null);
-      } else {
-        setTasks((prev) => [...prev, taskData]);
+      try {
+        let updatedTasks;
+
+        if (editIndex !== null) {
+            const response = await axios.put(`http://localhost:8080/api/tasks/${taskData.id}`, taskData);
+            const updatededTasks = response.data;
+            
+            setTasks((prev) => {
+            const updatededList = [...prev];
+            updatededList[editIndex] = updatededTasks;
+            return updatededList;
+          });
+
+          setEditIndex(null);
+        } else {
+          const response = await axios.post(`http://localhost:8080/api/tasks`, taskData)
+          const newTask = response.data;
+
+          setTasks((prev) => {
+        const updatedList = [...prev, newTask];
+        updatedTasks = updatedList;
+        return updatedList;
+      });
+    }
+      // Atualiza o localStorage
+      if(updatedTasks) {
+        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
       }
 
-    // Limpa formulário após salvar
+      // Limpa formulário após salvar
       setTaskData({
           task: "",
           task_description: "",
           status: "todo",
           tags: [],
-          category: "",
+          category: null,
         });
-      onCancel(); // Fechar modal
+        onCancel(); // Fechar modal
+      } catch (error) {
+        console.error("Erro ao salvar tarefa", error);
+        alert("Erro ao salvar tarefa. Verifique o console")
+      }
   };
 
   return (
@@ -108,13 +133,13 @@ const TaskForm = ({
             {/** Categorias */}
             <select
               name="category"
-              value={taskData.category}
+              value={taskData.category?.id || ""}
               className="task_categories"
               onChange={handleChange}>
               <option value="">Selecione uma categoria</option>
-              {categories.map((cat, index) => (
-                <option key={index} value={cat}>
-                  {cat}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>

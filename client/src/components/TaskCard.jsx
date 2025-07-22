@@ -22,7 +22,7 @@ const TaskCard = ({
 
       <p className="task_text">{title}</p>
       <p className="task_description">{description}</p>
-      <p className="task_category">{category}</p> {/* Mostra a categoria */}
+      <p className="task_category">{category?.name || ""}</p> {/* Mostra a categoria */}
       <div className="task_card_bottom_line">
         <div className="task_card_tags">
           {tags.map((tag, index) => ( 
