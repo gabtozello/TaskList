@@ -29,7 +29,7 @@ venv/
 .venv/
 ENV/
 env/
-
+venv/Lib/
 # SQLAlchemy
 alembic/
 *.egg-info/
