@@ -7,7 +7,6 @@ import axios from "axios";
 //localStorage.removeItem("categorias")
 
 const App = () => {
-
   // Estados principais
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem("tasks");
@@ -22,6 +21,17 @@ const App = () => {
     category: "",
   });
 
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todas");
+
+  const [categories, setCategories] = useState(() => {
+    const savedCategories = localStorage.getItem("categorias");
+    return savedCategories ? JSON.parse(savedCategories) : [];
+  });
+
+  const [showForm, setShowForm] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+
   // Resetar o formulario de tarefas
   const resetTaskForm = () => {
     setTaskData({
@@ -34,14 +44,7 @@ const App = () => {
     setEditIndex(null);
   };
 
-// <----------------------CATEGORIAS------------------------------->
-// Estado inicial das categorias
-// Tenta carregar do localStorage ("categorias") ou começa com um array vazio
-  const [categories, setCategories] = useState(() => {
-    const savedCategories = localStorage.getItem("categorias");
-    return savedCategories ? JSON.parse(savedCategories) : [];
-  });
-// useEffect para buscar categorias do backend assim que o componente carregar
+  // Buscar categorias do backend ao carregar o componente
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -51,8 +54,7 @@ const App = () => {
         );
         const backendCategories = response.data;
 
-        
-      // Cria uma cópia das categorias locais
+        // Cria uma cópia das categorias locais
         const merged = [...categories];
 
         // Verifica se alguma categoria do backend ainda não está no local e adiciona
@@ -63,10 +65,9 @@ const App = () => {
           }
         });
 
-         // Atualiza o estado e o localStorage com a lista mesclada
+        // Atualiza o estado e o localStorage com a lista mesclada
         setCategories(merged);
         localStorage.setItem("categorias", JSON.stringify(merged));
-      
       } catch (error) {
         console.error("Erro ao buscar categorias do BackEnd:", error);
       }
@@ -75,7 +76,7 @@ const App = () => {
     fetchCategories();
   }, []);
 
-// Função para adicionar uma nova categoria (local + backend)
+  // Adicionar nova categoria
   const handleAddCategory = async () => {
     const input = prompt("Digite o nome da nova categoria:");
     const newCat = input && input.trim();
@@ -108,7 +109,7 @@ const App = () => {
     }
   };
 
-// Função para remover uma categoria (local + backend)
+  // Remover categoria
   const handleRemoveCategory = async (categoryToRemove) => {
     // Confirmação com o usuário
     const confirmRemove = window.confirm(
@@ -117,7 +118,7 @@ const App = () => {
     if (!confirmRemove) return;
 
     try {
-        // Se a categoria existir no backend (id diferente de 0), envia DELETE
+      // Se a categoria existir no backend (id diferente de 0), envia DELETE
       if (categoryToRemove.id !== 0) {
         await axios.delete(
           `http://127.0.0.1:8080/api/categories/${categoryToRemove.id}`
@@ -144,15 +145,7 @@ const App = () => {
     }
   };
 
-
-
-
-
-
-
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Todas");
-  // Filtro de tarefas para categorias / Pesquisa de tarefas
+  // Filtro de busca e categoria
   const filterTasks = tasks.filter((task) => {
     const name = task.task?.toLowerCase() || "";
     const searchLower = search.toLowerCase();
@@ -161,49 +154,35 @@ const App = () => {
       // Quando tem busca, só filtra pelo texto, independente da categoria
       return name.includes(searchLower);
     }
-
     // Quando não tem busca, filtra pela categoria (ou "Todas" para tudo)
     const isAllSelected = selectedCategory === "Todas";
     const taskCategoryName = task.category?.name || "";
     return isAllSelected ? true : taskCategoryName === selectedCategory;
   });
-
-
-
-
-
-
-
-
-
-  const [showForm, setShowForm] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
-
   // Atualiza localStorage sempre que as tarefas mudam
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-
   // Deletar tarefa
-const handleDelete = (index) => {
-  setTasks((prev) => {
-    const taskToDelete = prev[index];
+  const handleDelete = (index) => {
+    setTasks((prev) => {
+      const taskToDelete = prev[index];
 
-    // Chamada ao backend
-    axios.delete(`http://localhost:8080/api/tasks/${taskToDelete.id}`)
-      .catch((err) => {
-        console.error("Erro ao deletar tarefa do backend", err);
-      });
+      // Chamada ao backend
+      axios
+        .delete(`http://localhost:8080/api/tasks/${taskToDelete.id}`)
+        .catch((err) => {
+          console.error("Erro ao deletar tarefa do backend", err);
+        });
 
-    const updatedTasks = prev.filter((_, i) => i !== index);
+      const updatedTasks = prev.filter((_, i) => i !== index);
+      // Atualiza o localStorage
+      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
 
-    // Atualiza o localStorage
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-    return updatedTasks;
-  });
-};
+      return updatedTasks;
+    });
+  };
 
   // Editar tarefa
   const handleEdit = (index) => {
@@ -213,7 +192,7 @@ const handleDelete = (index) => {
     setShowForm(true); // Abre o form já preenchido
   };
 
-  // Resetar form para adicionar tarefa
+  // Abrir formulário de nova tarefa
   const handleNewTask = () => {
     if (!showForm) {
       resetTaskForm();
@@ -221,61 +200,63 @@ const handleDelete = (index) => {
     setShowForm((prev) => !prev);
   };
 
-const handleMoveLeft = (index) => {
-  setTasks((prevTasks) => {
-    const updatedTasks = [...prevTasks];
-    const task = { ...updatedTasks[index] }; // cria cópia real
+  // Mover tarefa para a esquerda
+  const handleMoveLeft = (index) => {
+    setTasks((prevTasks) => {
+      const updatedTasks = [...prevTasks];
+      const task = { ...updatedTasks[index] }; // cria cópia real
 
-    if (task.status === "doing") {
-      task.status = "todo";
-    } else if (task.status === "done") {
-      task.status = "doing";
-    } else {
-      return prevTasks; // não faz nada se já estiver em "todo"
-    }
+      if (task.status === "doing") {
+        task.status = "todo";
+      } else if (task.status === "done") {
+        task.status = "doing";
+      } else {
+        return prevTasks; // não faz nada se já estiver em "todo"
+      }
 
-    updatedTasks[index] = task;
+      updatedTasks[index] = task;
 
-    axios.put(`http://localhost:8080/api/tasks/${task.id}`, task)
-      .catch((err) => {
-        console.error("Erro ao mover tarefa para a esquerda", err);
-      });
+      axios
+        .put(`http://localhost:8080/api/tasks/${task.id}`, task)
+        .catch((err) => {
+          console.error("Erro ao mover tarefa para a esquerda", err);
+        });
 
-    return updatedTasks;
-  });
-};
+      return updatedTasks;
+    });
+  };
 
-const handleMoveRight = (index) => {
-  setTasks((prevTasks) => {
-    const updatedTasks = [...prevTasks];
-    const task = { ...updatedTasks[index] }; // cria cópia real
+  // Mover tarefa para a direita
+  const handleMoveRight = (index) => {
+    setTasks((prevTasks) => {
+      const updatedTasks = [...prevTasks];
+      const task = { ...updatedTasks[index] }; // cria cópia real
 
-    if (task.status === "todo") {
-      task.status = "doing";
-    } else if (task.status === "doing") {
-      task.status = "done";
-    } else {
-      return prevTasks; // não faz nada se já estiver em "done"
-    }
+      if (task.status === "todo") {
+        task.status = "doing";
+      } else if (task.status === "doing") {
+        task.status = "done";
+      } else {
+        return prevTasks; // não faz nada se já estiver em "done"
+      }
 
-    updatedTasks[index] = task;
+      updatedTasks[index] = task;
 
-    axios.put(`http://localhost:8080/api/tasks/${task.id}`, task)
-      .catch((err) => {
-        console.error("Erro ao mover tarefa para a direita", err);
-      });
+      axios
+        .put(`http://localhost:8080/api/tasks/${task.id}`, task)
+        .catch((err) => {
+          console.error("Erro ao mover tarefa para a direita", err);
+        });
 
-    return updatedTasks;
-  });
-};
+      return updatedTasks;
+    });
+  };
 
-
-
-
+  // Renderização
   return (
     <div className="app">
       <header className="app_header">📝 Minha Lista de Tarefas</header>
-
+      {/* Barra de busca e botão de nova tarefa */}
       <div className="task_controls_wrapper">
         <div className="task_controls">
           <div className="search_wrapper">
@@ -294,7 +275,7 @@ const handleMoveRight = (index) => {
           </div>
         </div>
       </div>
-
+      {/* Formulário de tarefa */}
       {showForm && (
         <TaskForm
           setTasks={setTasks}
@@ -306,7 +287,7 @@ const handleMoveRight = (index) => {
           onCancel={() => setShowForm(false)}
         />
       )}
-
+      {/* Filtros de categorias */}
       <div className="categories_container">
         <div className="categories_btns_wrapper">
           {/* Botão "Todas" */}
@@ -339,6 +320,7 @@ const handleMoveRight = (index) => {
         </div>
       </div>
 
+      {/* Colunas de tarefas */}
       <main className="app_main">
         <TaskColumn
           taskColumnName="To Do"
