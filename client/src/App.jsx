@@ -3,9 +3,6 @@ import "./App.css";
 import TaskForm from "./components/TaskForm.jsx";
 import TaskColumn from "./components/TaskColumn.jsx";
 
-const oldTasks = localStorage.getItem("tasks");
-console.log("OLD TASKS", oldTasks);
-
 const App = () => {
   // Estados principais
   const [tasks, setTasks] = useState(() => {
@@ -39,7 +36,7 @@ const App = () => {
     const savedCategories = localStorage.getItem("categorias");
     return savedCategories
       ? JSON.parse(savedCategories)
-      : ["Trabalho", "Pessoal", "Estudo"];
+      : ["Trabalho", "Pessoal", "Urgente"];
   });
 
   useEffect(() => {
@@ -127,36 +124,32 @@ const App = () => {
   // Mover tarefa para o estado anterior
   const handleMoveLeft = (index) => {
     setTasks((prevTasks) => {
-      return prevTasks.map((task, i) => {
-        if (i !== index) return task;
-
-        if (task.status === "doing") {
-          return { ...task, status: "todo" };
-        } else if (task.status === "done") {
-          return { ...task, status: "doing" };
-        } else {
-          return task;
-        }
-      });
+      const updatedTasks = [...prevTasks];
+      if (updatedTasks[index].status === "doing") {
+        updatedTasks[index].status = "todo";}
+      else if (updatedTasks[index].status === "done") {
+        updatedTasks[index].status = "doing";}
+      return updatedTasks;
     });
   };
 
-  // Mover tarefa para o próximo estado
-  const handleMoveRight = (index) => {
-    setTasks((prevTasks) => {
-      return prevTasks.map((task, i) => {
-        if (i !== index) return task;
+    // Mover tarefa para o próximo estado
+const handleMoveRight = (index) => {
+  setTasks((prevTasks) => {
+    return prevTasks.map((task, i) => {
+      if (i !== index) return task;
 
-        if (task.status === "todo") {
-          return { ...task, status: "doing" };
-        } else if (task.status === "doing") {
-          return { ...task, status: "done" };
-        } else {
-          return task;
-        }
-      });
+      if (task.status === "todo") {
+        return { ...task, status: "doing" };
+      } else if (task.status === "doing") {
+        return { ...task, status: "done" };
+      } else {
+        return task;
+      }
     });
-  };
+  });
+};
+
 
   return (
     <div className="app">

@@ -1,6 +1,6 @@
-# Lista de Tarefas React + Flask
+# 📝 Lista de Tarefas React + Flask
 
-📝 Projeto de lista de tarefas fullstack com frontend em React e backend em Flask + SQLAlchemy para persistência em banco de dados.
+Projeto de lista de tarefas fullstack com frontend em React e backend em Flask + SQLAlchemy para persistência em banco de dados.
 
 ---
 

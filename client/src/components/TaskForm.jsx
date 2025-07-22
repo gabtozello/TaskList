@@ -30,7 +30,7 @@ const TaskForm = ({
   }
 
   // Atualiza qualquer campo do formulário
-   const handleChange = (e) => {
+   const handleChange =  (e) => {
     const { name, value } = e.target;
     setTaskData((prev) => ({
        ...prev, 
@@ -39,33 +39,61 @@ const TaskForm = ({
   };
 
   // Submete nova tarefa ou atualiza tarefa existente
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (taskData.task.trim() === "") {
-        alert("O título da tarefa não pode estar vazio.");
-        return;
-      }
-      if (editIndex !== null) {
-        setTasks((prev) => {
-          const updatededTasks = [...prev];
-          updatededTasks[editIndex] = taskData;
-          return updatededTasks;
-        });
-        setEditIndex(null);
-      } else {
-        setTasks((prev) => [...prev, taskData]);
-      }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try{
+    let response;
 
-    // Limpa formulário após salvar
-      setTaskData({
-          task: "",
-          task_description: "",
-          status: "todo",
-          tags: [],
-          category: "",
-        });
-      onCancel(); // Fechar modal
-  };
+    if(editIndex !== null && taskData.id) {
+      // EDITAR TAREFA EXISTENTE
+        response = await fetch(`http://localhost:8080/api/tasks/${taskData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(taskData),
+      });
+    
+    if (!response.ok) {
+      throw new Error("Erro ao atualizar tarefa do backend");
+    }
+
+    const updatedTasks = await response.json();
+
+    setTasks((prev) => {
+      const updated = [...prev];
+      updated[editIndex] = updatedTasks;
+      return updated
+    });
+
+    setEditIndex(null);
+  } else {
+    // ADICIONAR TAREFA
+    response = await fetch("http://localhost:8080/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json"},
+      body: JSON.stringify(taskData),
+    });
+    
+    if (!response.ok) {
+      throw new Error("Erro ao adicionar tarefa no backend");
+    }
+    
+    const newTask = await response.json();
+    setTasks((prev) => [...prev, newTask]);
+  }
+  // Resetar e fechar o modal
+  setTaskData ({
+      task: "",
+      task_description: "",
+      status: "todo",
+      tags: [],
+      category: null,
+  });
+  setShowForm(false); } catch(error){
+   console.error("Erro no handleSubmit:", error);
+    alert("Ocorreu um erro ao salvar a tarefa.");
+  }
+};
+
 
   return (
     <header className="app_header">
@@ -86,7 +114,7 @@ const TaskForm = ({
           name="task_description"
           value={taskData.task_description}
           className="task_input"
-          placeholder="Digite a descrição..."
+          placeholder="Digite a descrição"
           onChange={handleChange}
         />
         
@@ -129,14 +157,12 @@ const TaskForm = ({
               <option value="done">Done</option>
             </select>
             {/** Botões Salvar e Cancelar */}
-            <div className="form_buttons">
             <button type="submit" className="task_submit">
               {editIndex !== null ? "Salvar" : "+ Adicionar Tarefa"}
             </button>
             <button type="button" className="task_cancel" onClick={onCancel}>
               Cancelar
             </button>
-            </div>
           </div>
         </div>
       </form>
